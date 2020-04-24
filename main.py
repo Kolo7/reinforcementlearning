@@ -53,15 +53,17 @@ class Agent(object):
     # sarsa learning
     def learning(self, gamma, alpha, max_episode_num):
         total_time, time_in_episode, num_episode = 0, 0, 1
-        max_episode_step = 100
+        max_episode_step = 10
+        self.sum_utility_list = []
         while num_episode <= max_episode_num: # 设置终止条件
-            #self.state = self.env.reset()    # 环境初始化
+            self.state = self.env.reset()    # 环境初始化
             s0 = self._get_state_name(self.state) # 获取个体对于观测的命名
             #self.env.render()                # 显示UI界面
             a0 = self.performPolicy(s0, num_episode, use_epsilon = True)
-
+            sum_utility = 0
             time_in_episode = 0
             is_done = False
+            
             while time_in_episode <= max_episode_step:               # 针对一个Episode内部
                 # a0 = self.performPolicy(s0, num_episode)
                 s1, r1 = self.act(a0) # 执行行为
@@ -77,21 +79,23 @@ class Agent(object):
                 #alpha = alpha / num_episode
                 new_q = old_q + alpha * (td_target - old_q)
                 self._set_Q(s0, a0, new_q)
-                
+                """
                 if num_episode == max_episode_num: # 终端显示最后Episode的信息
                     print("t:{0:>2}: s:{1}, a:{2:2}, s1:{3}".\
                         format(time_in_episode, s0, a0, s1))
-
+                """
+                sum_utility += alpha*r1
                 s0, a0 = s1, a1
                 time_in_episode += 1
                 if alpha < 0.001:
                     continue
-
-            print("Episode {0} takes {1} steps.".format(
-                num_episode, time_in_episode)) # 显示每一个Episode花费了多少步
+            self.env._d_move()
+            self.sum_utility_list.append(sum_utility)
+            #print("Episode {0} takes {1} steps.".format(
+            #    num_episode, time_in_episode)) # 显示每一个Episode花费了多少步
             total_time += time_in_episode
             num_episode += 1
-        return
+        return 
 
     def _get_state_name(self, state):
         """

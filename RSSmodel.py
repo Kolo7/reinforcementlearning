@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import random
+
 class RssEnv:
     def __init__(self):
         # 路径损耗
@@ -26,17 +27,19 @@ class RssEnv:
         self.r2_point = (random.uniform(-1,1), random.uniform(-1,1))
         #self.d_point = (0.06,0.06)
         self.d_point = (random.uniform(-1,1), random.uniform(-1,1))
+        self.pointer = self._d_move_2()
 
     def reset(self):
         """
         完成对环境的初始化，返回当前的状态，一般是(0,0,0)
         """
-        self.d_point = (random.uniform(-1,1), random.uniform(-1,1))
+        #self.d_point = (random.uniform(-1,1), random.uniform(-1,1))
+        #self.d_point = self._d_move()
         # 中继节点发射功率，一时刻一变
-        self.transmit_powers = random.sample([0.04, 0.05, 0.06], 2)
+        #self.transmit_powers = random.sample([0.04, 0.05, 0.06], 2)
         
-        s, r = self.step(random.sample(self.actions, 1)[0])
-        
+        #s, r = self.step(random.sample(self.actions, 1)[0])
+        s = (0,0,0)
         return s
 
     def action_space_sample(self):
@@ -49,7 +52,6 @@ class RssEnv:
         """
         对当前状态采取行动a，获得下一步状态，奖励
         """
-        self._d_move()
         self.transmit_powers = random.sample([0.04, 0.05, 0.06], 2)
         g3 = self._g_channel_gain(self._cal_distance(self.s_point, self.d_point))
         snr1 = self._snr1(g3)
@@ -76,12 +78,22 @@ class RssEnv:
         return self.actions
     
     def _d_move(self):
+        # return _d_move_1()
+        return next(self.pointer)
+        
+    def _d_move_1(self):
         momentum = 0.05
         _x,_y = random.sample((momentum, -momentum), 1)[0], random.sample((momentum, -momentum), 1)[0]
         new_x, new_y = self.d_point[0]-_x, self.d_point[1]-_y
         self.d_point = (new_x if new_x>-1 and new_x<1 else self.d_point[0], new_y if new_y>-1 and new_y<1 else self.d_point[1])
         
-    
+    def _d_move_2(self):
+        point = [(0.1,0.15),(0.24,0.82),(0.6,0.79)]
+        i = 0
+        while True:
+            self.d_point = point[i if i<3 else 0]
+            i = i+1 if i<3 else 0
+            yield 
     def _utility(self, s, a):
         """
         获得状态行为效用
@@ -98,11 +110,12 @@ class RssEnv:
         sigma2 = 0.16
         y = 1.0/math.sqrt(2*math.pi*sigma2) * math.exp(-(x-mu)**2 /(2*sigma2))
         level = [0.043820751233921346, 0.20274324286219808, 0.3616657344904748, 0.5205882261187514, 0.6795107177470283, 0.8384332093753051, 0.9973557010035816]
-        #level = level[-1:]
+        """
         for each in level:
             if y <= each:
                 y = each
                 break
+        """
         return y
     
     def _snr1(self, g3):
