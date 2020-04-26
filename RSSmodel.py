@@ -48,6 +48,14 @@ class RssEnv:
         """
         return random.sample(self.actions, 1)[0]
 
+    def action_space_shape(self):
+        return 3
+    
+    def observation_space_shape(self):
+        """
+        获得状态的shape
+        """
+        return 3
     def step(self, a):
         """
         对当前状态采取行动a，获得下一步状态，奖励
